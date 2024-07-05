@@ -1,31 +1,46 @@
-const axios = require("axios");
+const prompt = require("prompt-sync")();
+const { getWeatherData } = require("./getWeatherData.js");
 
-const apiKey = `444a8fc41ebb6d9653e96e0dbdf62866`;
-const cityName = "Adaba";
+require("dotenv").config();
+
+const apiKey = process.env.API_KEY;
+
 const stateCode = "";
-const countryCode = "ET";
 const limit = 1;
-const weatherLocationURL = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName},${stateCode},${countryCode}&limit=${limit}&appid=${apiKey}`;
 
-async function getWeatherData() {
-  const location = await axios
-    .get(weatherLocationURL)
-    .then((res) => {
-      const reponse = res.data;
+console.log("Welcome to Weather App");
+console.log(
+  "Please Enter the following information to see the weather condition in your area:"
+);
 
-      return { lat: reponse[0].lat, lon: reponse[0].lon };
-    })
-    .catch((err) => console.log(`ERROR:  ${err})`));
-  const { lat, lon } = location;
-  console.log(lat, lon);
-  const weatherURL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-  const Weather = axios
-    .get(weatherURL)
-    .then((res) => {
-      const reponse = res.data;
-      console.log(reponse);
-    })
-    .catch((err) => console.log(`ERROR ${err}`));
+let cityName = prompt("City Name: ").trim();
+while (!cityName) {
+  cityName = prompt(
+    "City Name cannot be empty. Please enter City Name: "
+  ).trim();
 }
 
-getWeatherData();
+let countryCode = prompt("Country Code (2 letters, e.g., US): ")
+  .toUpperCase()
+  .trim();
+while (!countryCode || countryCode.length !== 2) {
+  countryCode = prompt(
+    "Country Code is invalid. Please enter a valid 2-letter Country Code: "
+  )
+    .toUpperCase()
+    .trim();
+}
+
+getWeatherData(cityName, stateCode, countryCode, limit, apiKey)
+  .then((weatherData) => {
+    if (weatherData) {
+      console.log("Weather Data:");
+      console.log(`Temperature: ${weatherData.main.temp}K`);
+      console.log(`Humidity: ${weatherData.main.humidity}%`);
+      console.log(`Wind Speed: ${weatherData.wind.speed}m/s`);
+      console.log(`Description: ${weatherData.weather[0].description}`);
+    }
+  })
+  .catch((err) => {
+    console.error("Error fetching weather data:", err);
+  });
